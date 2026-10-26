@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Decoding Data: building a movie recommender</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--tx:#1f1a17;--mu:#6b625b;--ac:#9f1239;--go:#a16207;--bd:#e4dcd2;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#16110f;--card:#211a17;--tx:#f3ece4;--mu:#b3a79c;--ac:#fb7185;--go:#fbbf24;--bd:#3a2f2a;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:900px;margin:auto;padding:28px 18px 70px}
+h1,h2{font-family:Georgia,"Times New Roman",serif;line-height:1.2}h1{font-size:2.3rem;margin:.3em 0}h2{font-size:1.55rem;margin:2.2em 0 .3em;border-top:3px solid var(--ac);padding-top:.6em}
+h3{margin:1.4em 0 .3em;font-size:1.05rem}p,li{max-width:70ch}.mu{color:var(--mu)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:4px;padding:14px 16px;margin:12px 0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}.grid .card{margin:0}
+.kpi b{display:block;font:700 1.55rem Georgia,serif;color:var(--ac)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}td,th{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left;vertical-align:top}
+.scroll{overflow-x:auto}svg{width:100%;height:auto;display:block}svg text{fill:var(--mu);font-size:11px}
+.bar{display:flex;align-items:center;gap:8px;font-size:.9rem}.bar i{display:block;height:14px;background:var(--ac);border-radius:2px}
+.need{border-left:4px solid var(--go);padding:2px 0 2px 12px;margin:14px 0;color:var(--mu)}
+select,input{font:inherit;color:var(--tx)}select{background:var(--card);border:1px solid var(--bd);padding:4px 8px;border-radius:4px}
+input:focus-visible,select:focus-visible{outline:3px solid var(--go);outline-offset:2px}
+.two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}ol.r{padding-left:20px;margin:6px 0}
+nav a{margin-right:14px;color:var(--ac)}
+
+.hero{display:grid;grid-template-columns:1fr 240px;gap:16px;align-items:center;background:linear-gradient(135deg,#9f1239,#7e22ce 55%,#0369a1);color:#fff;border-radius:10px;padding:26px;margin:14px 0 0}
+.hero h1{margin:.1em 0;color:#fff}.hero p{color:#ffeef3;margin:0}@media(max-width:640px){.hero{grid-template-columns:1fr}}
+.strip{height:26px;margin-bottom:10px;background:repeating-linear-gradient(90deg,transparent 0 8px,#f5f0e8 8px 18px) 0 4px/100% 6px no-repeat,repeating-linear-gradient(90deg,transparent 0 8px,#f5f0e8 8px 18px) 0 16px/100% 6px no-repeat,#1f1a17;border-radius:0 0 8px 8px}
+h2.ban{color:#fff;border:0;padding:12px 18px;border-radius:8px}.b1{background:linear-gradient(90deg,#0369a1,#0891b2)}.b2{background:linear-gradient(90deg,#15803d,#0f766e)}.b3{background:linear-gradient(90deg,#7e22ce,#be185d)}.b4{background:linear-gradient(90deg,#c2410c,#a16207)}.b5{background:linear-gradient(90deg,#9f1239,#be123c)}
+.fl{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.fl span{padding:6px 14px;border-radius:20px;color:#fff;font-size:.88rem;background:var(--c)}
+.cards3{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:12px 0}.cards3 .card{margin:0}.tc{border-top:5px solid var(--c)}.tc svg{width:90px;height:auto}
+.six{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.st{background:var(--card);border:1px solid var(--bd);border-top:4px solid var(--c);padding:8px;border-radius:4px;font-size:.88rem}
+.st i{font-style:normal;color:#fff;background:var(--c);border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;margin-right:6px}.st span{display:block;color:var(--mu);margin-top:4px}
+pre{background:var(--bg);padding:8px;overflow:auto;font-size:.8rem;border-radius:4px;margin:6px 0 0}
+</style></head><body><main>
+<nav><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#rec">Recommender</a><a href="#end">Conclusion</a></nav>
+<div class="hero"><div><h1>Decoding Data: how one movie recommender uses every concept</h1><p>From raw ratings to personal movie picks, with Units I, II and III in one story.</p></div>
+<svg viewBox="0 0 240 170" role="img" aria-label="Clapperboard, film reel and popcorn illustration">
+<rect x="8" y="70" width="112" height="80" rx="6" fill="#1f1a17"/><rect x="8" y="46" width="112" height="24" rx="4" fill="#f5f0e8"/>
+<path d="M18 70l16-24h16l-16 24zM52 70l16-24h16l-16 24zM86 70l16-24h16l-16 24z" fill="#1f1a17"/>
+<text x="18" y="102" style="fill:#fff;font-size:13px;font-weight:700">DATA SCIENCE</text><text x="18" y="124" style="fill:#fbbf24;font-size:12px">★★★★★</text><text x="18" y="142" style="fill:#fda4af;font-size:10px">Take 1: ratings</text>
+<circle cx="170" cy="48" r="38" fill="#be123c"/><circle cx="170" cy="48" r="8" fill="#fff"/><g fill="#fff"><circle cx="170" cy="25" r="7"/><circle cx="192" cy="41" r="7"/><circle cx="184" cy="66" r="7"/><circle cx="156" cy="66" r="7"/><circle cx="148" cy="41" r="7"/></g>
+<path d="M148 100h56l-8 62h-40z" fill="#fff"/><path d="M155 100h8l-2 62h-6zM173 100h8v62h-8zM191 100h8l-3 62h-5z" fill="#dc2626"/>
+<g fill="#fde68a"><circle cx="158" cy="95" r="9"/><circle cx="176" cy="90" r="10"/><circle cx="194" cy="95" r="9"/></g></svg></div><div class="strip"></div>
+<p class="mu">Data Science blog, Units I to III. Instead of covering topics one by one, this post follows a single product, a movie recommendation system like the one behind a streaming app, and shows where each concept is needed. Every number below is computed in your browser from a sample ratings dataset.</p>
+<div class="card scroll"><table><thead><tr><th>What the recommender needs</th><th>Concept that provides it</th><th>Unit</th></tr></thead><tbody>
+<tr><td>A clear goal and a repeatable workflow</td><td>Analytics lifecycle</td><td>I</td></tr>
+<tr><td>Handling huge, sparse, mixed data</td><td>Big Data 5 Vs, data types, data preparation</td><td>I</td></tr>
+<tr><td>Understanding how people rate</td><td>Mean, median, mode, standard deviation</td><td>II</td></tr>
+<tr><td>Finding viewers with similar taste</td><td>Correlation</td><td>II</td></tr>
+<tr><td>Checking that genre differences are real</td><td>Hypothesis testing</td><td>II</td></tr>
+<tr><td>Grouping viewers by taste</td><td>K-Means, elbow method, silhouette score</td><td>III</td></tr>
+<tr><td>Proving the system works</td><td>Hold-out evaluation (RMSE)</td><td>Action</td></tr></tbody></table></div>
+
+<h2 id="u1" class="ban b1">Unit I: Framing the problem and the data</h2>
+<div class="need"><b>Problem statement:</b> how can past ratings be used to suggest movies a viewer has not seen yet and will probably enjoy?</div>
+<h3>Four types of analytics, one recommender</h3>
+<div class="cards3">
+<div class="card tc" style="--c:#0369a1"><b>📊 Descriptive</b><br><span class="mu">What happened?</span><p id="ta1"></p></div>
+<div class="card tc" style="--c:#0f766e"><b>🔍 Diagnostic</b><br><span class="mu">Why did it happen?</span><p>Compare groups with tests and clusters to see who rates which genre high or low.</p></div>
+<div class="card tc" style="--c:#7e22ce"><b>🔮 Predictive</b><br><span class="mu">What may happen?</span><p id="ta3"></p></div>
+<div class="card tc" style="--c:#c2410c"><b>🎯 Prescriptive</b><br><span class="mu">What should we do?</span><p>Show each viewer the best unseen titles from their own taste group.</p></div></div>
+<h3>The analytics lifecycle for this project</h3>
+<div class="fl"><span style="--c:#0369a1">🎯 1 Discovery</span><span style="--c:#0891b2">🧹 2 Data preparation</span><span style="--c:#15803d">🗺️ 3 Model planning</span><span style="--c:#7e22ce">🤖 4 Model building</span><span style="--c:#c2410c">📊 5 Communicate</span><span style="--c:#9f1239">🚀 6 Operationalize</span></div>
+<ol class="r"><li><b>Discovery:</b> goal is better suggestions, success means lower prediction error than simply showing popular titles.</li>
+<li><b>Data preparation:</b> collect ratings, hide 20% for testing, fill gaps, aggregate ratings by genre per viewer.</li>
+<li><b>Model planning:</b> choose descriptive statistics, a hypothesis test and clustering.</li>
+<li><b>Model building:</b> run K-Means on viewer taste profiles.</li>
+<li><b>Communicate:</b> show lists, charts and error scores.</li>
+<li><b>Operationalize:</b> serve each viewer the picks of their taste group.</li></ol>
+<h3>The 5 Vs on a streaming platform</h3>
+<div class="card scroll"><table><tbody>
+<tr><td><b>Volume</b></td><td>Millions of viewers rating thousands of titles.</td></tr>
+<tr><td><b>Velocity</b></td><td>Every play, pause and rating arrives continuously.</td></tr>
+<tr><td><b>Variety</b></td><td>Ratings are structured tables, movie details are semi-structured JSON, reviews and trailers are unstructured text and video.</td></tr>
+<tr><td><b>Veracity</b></td><td>Accidental clicks, fake reviews and mood-based ratings add noise.</td></tr>
+<tr><td><b>Value</b></td><td>Better suggestions mean longer viewing and fewer cancellations.</td></tr></tbody></table></div>
+<h3>Structured, semi-structured and unstructured data</h3>
+<div class="cards3">
+<div class="card tc" style="--c:#0369a1"><b>🗂️ Structured</b><table><tr><th>viewer</th><th>movie</th><th>rating</th></tr><tr><td>1</td><td>Inception</td><td>5</td></tr><tr><td>1</td><td>Titanic</td><td>2</td></tr><tr><td>2</td><td>3 Idiots</td><td>4</td></tr></table><span class="mu">Fixed columns, ready for statistics.</span></div>
+<div class="card tc" style="--c:#15803d"><b>🧾 Semi-structured</b><pre>{"title": "Inception",
+ "genres": ["Sci-Fi","Thriller"],
+ "year": 2010,
+ "cast": ["..."]}</pre><span class="mu">JSON movie details with flexible tags.</span></div>
+<div class="card tc" style="--c:#be123c"><b>🎞️ Unstructured</b><p>“Mind-bending visuals, I loved the ending!”</p><p>🖼️ Posters &nbsp; 🎬 Trailers &nbsp; 🔊 Audio</p><span class="mu">No fixed table, needs extra processing.</span></div></div>
+<h3>Data preparation on our dataset</h3>
+<div class="grid" id="dp"></div>
+<p class="mu">Missing values, duplicates and outliers distort results, so each is checked before any analysis.</p>
+<h3>Our sample dataset</h3>
+<div class="grid"><div class="card kpi"><span class="mu">Viewers</span><b id="k1"></b></div><div class="card kpi"><span class="mu">Movies</span><b id="k2"></b></div>
+<div class="card kpi"><span class="mu">Training ratings</span><b id="k3"></b></div><div class="card kpi"><span class="mu">Sparsity (empty cells)</span><b id="k4"></b></div></div>
+<p class="mu">Sparsity is the central data problem: most viewers have seen only a fraction of the catalogue. About 20% of known ratings are held out as a test set, so the final score is honest. The data is generated with a fixed seed, so the results are repeatable.</p>
+
+<h2 id="u2" class="ban b2">Unit II: Statistics and hypothesis testing</h2>
+<div class="need"><b>Need:</b> understand how people rate before building anything.</div>
+<div class="grid"><div class="card kpi"><span class="mu">Mean rating</span><b id="s1"></b></div><div class="card kpi"><span class="mu">Median</span><b id="s2"></b></div>
+<div class="card kpi"><span class="mu">Mode</span><b id="s3"></b></div><div class="card kpi"><span class="mu">Standard deviation</span><b id="s4"></b></div></div>
+<div class="card" id="hist"></div>
+<p id="sread" class="mu"></p>
+<h3>Formulas with live values</h3><div class="card scroll"><table id="fm"></table></div>
+<h3>Average rating by genre</h3><div class="card"><svg id="gb" viewBox="0 0 400 170"></svg></div><div class="card scroll"><table id="gt"></table></div>
+<h3>Hypothesis test: are Action and Romance rated differently?</h3><div class="six" id="six"></div>
+<div class="card"><p><b>H₀:</b> both genres have the same mean rating. <b>H₁:</b> they differ. <b>α = 0.05</b>, Welch two-sample test with a normal approximation for the p-value.</p><div id="ht"></div></div>
+<p class="mu">Why it matters: if genres were rated alike, genre-based suggestions would add nothing. A second caution: a statistically significant gap is only useful if it is large enough to change what a viewer sees.</p>
+<h3>Common hypothesis tests, run on our ratings</h3>
+<div class="card scroll"><table id="tt"></table></div>
+<h3>Correlation: finding viewers with similar taste</h3>
+<div class="card"><svg id="cs" viewBox="0 0 320 260"></svg><p id="cr" class="mu" style="margin:0"></p></div>
+<p>Pearson correlation compares two viewers on the movies both have rated. A value near +1 means they rate alike, near −1 means opposite tastes. You will see it used for the selected viewer in the recommender below. Correlation shows similarity, not that one viewer’s taste causes another’s.</p>
+
+<h2 id="u3" class="ban b3">Unit III: Clustering viewers into taste groups</h2>
+<div class="need"><b>Need:</b> with no labels like “action fan”, discover the groups from behaviour. This is unsupervised learning.</div>
+<p><b>Where clustering fits:</b> unlabelled data → similarity or distance → clusters → interpretation.</p>
+<div class="cards3">
+<div class="card tc" style="--c:#9f1239"><svg viewBox="0 0 80 44"><circle cx="16" cy="22" r="13" fill="#9f1239" opacity=".25"/><circle cx="40" cy="22" r="13" fill="#0369a1" opacity=".25"/><circle cx="64" cy="22" r="13" fill="#a16207" opacity=".25"/><circle cx="16" cy="22" r="3" fill="#9f1239"/><circle cx="40" cy="22" r="3" fill="#0369a1"/><circle cx="64" cy="22" r="3" fill="#a16207"/></svg><br><b>Partitioning</b><br><span class="mu">K-Means: choose K groups. Used here.</span></div>
+<div class="card tc" style="--c:#0369a1"><svg viewBox="0 0 80 44"><path d="M10 40V24h20V40M30 24V12h30M60 12V4M60 12V24h12V40M48 24V40" stroke="#0369a1" stroke-width="2" fill="none"/></svg><br><b>Hierarchical</b><br><span class="mu">Agglomerative: merge similar viewers into a tree of groups.</span></div>
+<div class="card tc" style="--c:#15803d"><svg viewBox="0 0 80 44"><g fill="#15803d"><circle cx="30" cy="20" r="3"/><circle cx="36" cy="25" r="3"/><circle cx="26" cy="27" r="3"/><circle cx="40" cy="17" r="3"/><circle cx="34" cy="31" r="3"/></g><circle cx="70" cy="8" r="3" fill="#dc2626"/><circle cx="8" cy="38" r="3" fill="#dc2626"/></svg><br><b>Density-based</b><br><span class="mu">DBSCAN: finds dense regions, flags noise such as odd raters.</span></div>
+<div class="card tc" style="--c:#7e22ce"><svg viewBox="0 0 80 44"><ellipse cx="30" cy="22" rx="22" ry="12" fill="#7e22ce" opacity=".3"/><ellipse cx="50" cy="22" rx="22" ry="12" fill="#be185d" opacity=".3"/></svg><br><b>Model-based</b><br><span class="mu">Gaussian mixtures: viewers belong partly to several groups.</span></div></div>
+<p>Each viewer becomes a profile of four numbers: their average rating for Action, Sci-Fi, Romance and Comedy (missing genres are filled with the viewer’s overall average). K-Means then groups viewers by Euclidean distance between profiles.</p>
+<label>Number of clusters K: <input type="range" id="k" min="2" max="6" value="3"> <b id="kv">3</b></label>
+<div class="two"><div class="card"><b>Viewer map</b> <span class="mu">(each dot is a viewer)</span><svg id="sc" viewBox="0 0 320 260"></svg></div>
+<div class="card"><b>Elbow method</b><svg id="el" viewBox="0 0 300 200"></svg><p id="sl" class="mu" style="font-size:.9rem;margin:0"></p></div></div>
+<div class="card scroll"><table id="ct"></table></div>
+<h3>K-Means step by step</h3>
+<p>The five steps: 1 choose K, 2 place initial centroids (squares), 3 assign each viewer to the nearest centroid, 4 move each centroid to the mean of its members, 5 repeat until nothing changes. Drag to replay.</p>
+<label>Iteration: <input type="range" id="ks" min="0" max="5" value="5"></label>
+<div class="card"><svg id="kst" viewBox="0 0 320 260"></svg><p id="kt" class="mu" style="margin:0"></p></div>
+<p><b>Silhouette score:</b> s = (b − a) / max(a, b), where a is the average distance to the viewer’s own cluster and b to the nearest other cluster. Closer to 1 means better separated groups. The elbow method looks for the K after which extra clusters add little.</p>
+
+<h2 id="rec" class="ban b4">Analysis to action: recommendations</h2>
+<div class="fl"><span style="--c:#0369a1">1 Define problem</span><span style="--c:#0891b2">2 Collect ratings</span><span style="--c:#15803d">3 Clean and explore</span><span style="--c:#65a30d">4 Test</span><span style="--c:#7e22ce">5 Cluster</span><span style="--c:#c2410c">6 Visualise</span><span style="--c:#9f1239">7 Act</span></div>
+<p>Pick a viewer. The popularity baseline suggests what is rated highest overall. The cluster-based method suggests what their own taste group rates highest, among movies they have not rated.</p>
+<label>Viewer: <select id="usr"></select></label>
+<div class="card" id="sim"></div><div class="card" id="dist"></div>
+<div class="two"><div class="card"><b>Popularity baseline</b><ol class="r" id="r1"></ol></div><div class="card"><b>Cluster-based picks</b> <span class="mu" id="cn"></span><ol class="r" id="r2"></ol></div></div>
+<h3>Does it actually work?</h3>
+<p>For each hidden test rating, both methods predict the score and we measure the error with RMSE (root mean squared error, lower is better).</p>
+<div class="grid" id="ev"></div>
+
+<h2 id="end" class="ban b5">Conclusion and limits</h2>
+<p>One product used the whole syllabus: the lifecycle framed the work, the 5 Vs explained the data, statistics and hypothesis testing checked the ratings, correlation measured similarity, clustering grouped viewers, and a held-out test proved the result.</p>
+<div class="card scroll"><table><tr><th>Challenge</th><th>Why it matters</th><th>In the recommender</th></tr>
+<tr><td>Data quality</td><td>Missing or wrong data misleads</td><td>Sparse ratings, accidental clicks</td></tr>
+<tr><td>Bias</td><td>Skewed samples skew results</td><td>Only people who chose to rate are counted</td></tr>
+<tr><td>Privacy</td><td>Personal data needs care</td><td>Viewing history is sensitive</td></tr>
+<tr><td>Wrong method</td><td>Poor technique, poor insight</td><td>Cold start: new viewers have no ratings to cluster</td></tr>
+<tr><td>Over-interpretation</td><td>Association is not causation</td><td>Filter bubbles: similar taste does not mean identical taste</td></tr></table></div>
+<p><b>Key takeaway:</b> good analytics combines the right question, reliable data, the right method and clear communication.</p>
+</main>
+<script>
+const $=i=>document.getElementById(i),COL=["#9f1239","#0369a1","#a16207","#15803d","#7e22ce","#0f766e"],GEN=["Action","Sci-Fi","Romance","Comedy"];
+const MV=[["Mad Max: Fury Road",0],["John Wick",0],["Die Hard",0],["Gladiator",0],["Inception",1],["Interstellar",1],["The Matrix",1],["Arrival",1],["Titanic",2],["The Notebook",2],["La La Land",2],["Dilwale Dulhania Le Jayenge",2],["3 Idiots",3],["The Hangover",3],["Superbad",3],["Paddington 2",3]];
+const TS=[[4.5,4,2,3],[2,2.5,4.6,3.5],[3,2.8,3,4.6]],NU=45;
+let seed=11;const R=()=>(seed=seed*16807%2147483647)/2147483647,Nm=()=>Math.sqrt(-2*Math.log(R()+1e-9))*Math.cos(6.2832*R());
+const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN,sd=a=>{const m=mean(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1))};
+const med=a=>{const b=[...a].sort((x,y)=>x-y),h=b.length>>1;return b.length%2?b[h]:(b[h-1]+b[h])/2},d2=(a,b)=>a.reduce((s,v,i)=>s+(v-b[i])**2,0),f=(v,n=2)=>v.toFixed(n);
+const Phi=z=>{const t=1/(1+.2316419*Math.abs(z)),p=.3989423*Math.exp(-z*z/2)*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p};
+const FU=[],M=[],Te=[];let cnt=0;
+for(let u=0;u<NU;u++){FU.push([]);M.push([]);MV.forEach((mv,m)=>{let tr=null,fr=null;if(R()<.6){fr=Math.min(5,Math.max(1,Math.round(TS[u%3][mv[1]]+Nm()*.7)));cnt++;if(cnt%5==0)Te.push({u,m,r:fr});else tr=fr}M[u][m]=tr;FU[u][m]=fr})}
+const A=M.flat().filter(x=>x!=null),GM=mean(A);
+const FT=M.map(r=>{const ov=mean(r.filter(x=>x!=null));return GEN.map((_,g)=>{const v=r.filter((x,m)=>x!=null&&MV[m][1]==g);return v.length?mean(v):ov})});
+function km(X,k){let C=[X[0]];while(C.length<k){let b=0,bd=-1;X.forEach((p,i)=>{const d=Math.min(...C.map(c=>d2(p,c)));if(d>bd){bd=d;b=i}});C.push(X[b])}
+ let L=[];for(let t=0;t<30;t++){L=X.map(p=>{let b=0,bd=1e18;C.forEach((c,j)=>{const d=d2(p,c);if(d<bd){bd=d;b=j}});return b});C=C.map((c,j)=>{const m=X.filter((_,i)=>L[i]==j);return m.length?c.map((_,q)=>mean(m.map(p=>p[q]))):c})}
+ return{L,I:X.reduce((a,p,i)=>a+d2(p,C[L[i]]),0)}}
+function sil(X,L,k){let t=0;X.forEach((p,i)=>{const s=Array(k).fill(0),c=Array(k).fill(0);X.forEach((q,j)=>{if(i!=j){s[L[j]]+=Math.sqrt(d2(p,q));c[L[j]]++}});const a=c[L[i]]?s[L[i]]/c[L[i]]:0;let b=1e18;for(let j=0;j<k;j++)if(j!=L[i]&&c[j])b=Math.min(b,s[j]/c[j]);t+=c[L[i]]?(b-a)/Math.max(a,b):0});return t/X.length}
+function pear(a,b){const x=[],y=[];MV.forEach((_,m)=>{if(M[a][m]!=null&&M[b][m]!=null){x.push(M[a][m]);y.push(M[b][m])}});if(x.length<3)return null;const mx=mean(x),my=mean(y);let sxy=0,sx=0,sy=0;x.forEach((v,i)=>{sxy+=(v-mx)*(y[i]-my);sx+=(v-mx)**2;sy+=(y[i]-my)**2});return sx&&sy?{r:sxy/Math.sqrt(sx*sy),n:x.length}:null}
+const vals=(m,fn)=>M.map(r=>r[m]).filter((x,v)=>x!=null&&fn(v));
+let CL=[],K=3;
+// Unit I and II (static)
+$("k1").textContent=NU;$("k2").textContent=MV.length;$("k3").textContent=A.length;$("k4").textContent=Math.round(100*(1-(A.length+Te.length)/(NU*MV.length)))+"%";
+const mo=(()=>{const c=[0,0,0,0,0,0];A.forEach(v=>c[v]++);return c})(),mode=mo.indexOf(Math.max(...mo));
+$("s1").textContent=f(GM);$("s2").textContent=med(A);$("s3").textContent=mode;$("s4").textContent=f(sd(A));
+$("hist").innerHTML="<b>Rating distribution</b>"+[1,2,3,4,5].map(r=>`<div class="bar"><span style="width:2.2em">${r} ★</span><i style="width:${mo[r]/Math.max(...mo)*60}%"></i><span>${mo[r]}</span></div>`).join("");
+$("sread").textContent=(GM<med(A)?"The mean is below the median, so a tail of low ratings pulls the average down.":GM>med(A)?"The mean is above the median, so a few very high ratings lift the average.":"Mean and median match, so ratings are balanced.")+" A standard deviation near "+f(sd(A),1)+" means opinions are spread out, which is exactly why one list for everyone fits poorly.";
+const gr=g=>M.flatMap(r=>r.filter((x,m)=>x!=null&&MV[m][1]==g));
+$("gt").innerHTML="<tr><th>Genre</th><th>Ratings</th><th>Mean</th><th>Std dev</th></tr>"+GEN.map((g,i)=>`<tr><td>${g}</td><td>${gr(i).length}</td><td>${f(mean(gr(i)))}</td><td>${f(sd(gr(i)))}</td></tr>`).join("");
+{const a=gr(0),b=gr(2),t=(mean(a)-mean(b))/Math.sqrt(sd(a)**2/a.length+sd(b)**2/b.length),p=2*(1-Phi(Math.abs(t)));
+$("ht").innerHTML=`<p>Action mean ${f(mean(a))} (n=${a.length}) vs Romance mean ${f(mean(b))} (n=${b.length}).<br>t = <b>${f(t)}</b>, p-value = <b>${p<.0001?"&lt; 0.0001":f(p,4)}</b></p><p><b>Decision:</b> ${p<.05?"Reject H₀. The genres are rated differently overall (gap of "+f(Math.abs(mean(a)-mean(b)))+" stars).":"Fail to reject H₀. Overall, the genres are rated about the same, even though individual groups of viewers differ strongly. Averages across everyone hide taste groups, which is the case for clustering."}</p>`}
+// Unit III + recommender
+$("usr").innerHTML=M.map((_,i)=>`<option value="${i}">Viewer ${i+1}</option>`).join("");
+function renderK(){const res={};for(let k=1;k<=6;k++)res[k]=km(FT,k);CL=res[K].L;$("kv").textContent=K;
+ let h='<line x1="30" y1="230" x2="310" y2="230" stroke="currentColor" opacity=".3"/><line x1="30" y1="10" x2="30" y2="230" stroke="currentColor" opacity=".3"/><text x="110" y="252">avg Action rating</text><text x="2" y="12">Romance</text>';
+ FT.forEach((p,i)=>h+=`<circle cx="${30+(p[0]-1)/4*270}" cy="${230-(p[2]-1)/4*210}" r="5" fill="${COL[CL[i]]}" opacity=".75"/>`);$("sc").innerHTML=h;
+ const I1=res[1].I;let pts="",dt="";for(let k=1;k<=6;k++){const x=30+(k-1)*48,y=170-res[k].I/I1*150;pts+=(k>1?"L":"M")+x+" "+y;dt+=`<circle cx="${x}" cy="${y}" r="${k==K?6:3.5}" fill="${k==K?"#a16207":"#9f1239"}"/><text x="${x-3}" y="192">${k}</text>`}
+ $("el").innerHTML=`<path d="${pts}" fill="none" stroke="#9f1239" stroke-width="2"/>${dt}<text x="4" y="12">within-cluster variation</text>`;
+ let best=2,bs=-2,cur=0;for(let k=2;k<=6;k++){const s=sil(FT,res[k].L,k);if(s>bs){bs=s;best=k}if(k==K)cur=s}
+ $("sl").innerHTML=`Silhouette at K=${K}: <b>${f(cur,3)}</b>. Highest for K=2 to 6: <b>K=${best}</b> (${f(bs,3)}).`;
+ const nm=[];let rows="<tr><th>Cluster</th><th>Viewers</th>"+GEN.map(g=>`<th>${g}</th>`).join("")+"</tr>";
+ for(let j=0;j<K;j++){const mb=FT.filter((_,i)=>CL[i]==j);if(!mb.length){nm[j]="empty";continue}const c=GEN.map((_,q)=>mean(mb.map(p=>p[q]))),t=c.indexOf(Math.max(...c));nm[j]=GEN[t]+" fans";
+ rows+=`<tr><td><span style="color:${COL[j]}">●</span> <b>${nm[j]}</b></td><td>${mb.length}</td>${c.map(v=>`<td>${f(v)}</td>`).join("")}</tr>`}
+ $("ct").innerHTML=rows;window.NM=nm;
+ let e1=0,e2=0;Te.forEach(t=>{const p=mean(vals(t.m,()=>true)),c=mean(vals(t.m,v=>CL[v]==CL[t.u]));const pc=isNaN(c)?p:c;e1+=(t.r-p)**2;e2+=(t.r-pc)**2});
+ const r1=Math.sqrt(e1/Te.length),r2=Math.sqrt(e2/Te.length);
+ $("ev").innerHTML=`<div class="card kpi"><span class="mu">Popularity RMSE</span><b>${f(r1)}</b></div><div class="card kpi"><span class="mu">Cluster-based RMSE (K=${K})</span><b>${f(r2)}</b></div><div class="card kpi"><span class="mu">Error change</span><b>${f(100*(r1-r2)/r1,1)}%</b>${r2<r1?"lower":"higher"} than the baseline, on ${Te.length} hidden ratings</div>`;
+ renderRec()}
+function renderRec(){const u=+$("usr").value,j=CL[u],un=MV.map((_,m)=>m).filter(m=>FU[u][m]==null);
+ const top=(fn)=>un.map(m=>({m,s:mean(vals(m,fn)),n:vals(m,fn).length})).filter(x=>x.n>=2).sort((a,b)=>b.s-a.s).slice(0,5);
+ const li=a=>a.map(x=>`<li>${MV[x.m][0]} <span class="mu">(${GEN[MV[x.m][1]]}, ${f(x.s,1)} ★)</span></li>`).join("")||"<li>Not enough data</li>";
+ $("r1").innerHTML=li(top(v=>v!=u));$("r2").innerHTML=li(top(v=>v!=u&&CL[v]==j));$("cn").textContent="from "+NM[j];
+ const liked=MV.map((mv,m)=>({m,r:M[u][m]})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r).slice(0,3).map(x=>MV[x.m][0]).join(", ");
+ let best=null;for(let v=0;v<NU;v++){if(v==u)continue;const p=pear(u,v);if(p&&(!best||p.r>best.r))best={v,...p}}
+ $("sim").innerHTML=`<b>Viewer ${u+1}</b> belongs to <b>${NM[j]}</b>. Top rated: ${liked}.<br>`+(best?`Most similar viewer by correlation: <b>Viewer ${best.v+1}</b> (r = ${f(best.r)} over ${best.n} shared movies), ${CL[best.v]==j?"in the same cluster, so both methods agree.":"in a different cluster."}`:"Too few shared movies to compute correlation.")}
+
+const pp=p=>p<.0001?"< 0.0001":"= "+f(p,4),dc=p=>p<.05?" → reject H₀":" → fail to reject H₀";
+const corr=(a,b)=>{const ma=mean(a),mb=mean(b);return a.reduce((q,v,i)=>q+(v-ma)*(b[i]-mb),0)/Math.sqrt(a.reduce((q,v)=>q+(v-ma)**2,0)*b.reduce((q,v)=>q+(v-mb)**2,0))};
+{const keys=new Set();let dup=0;FU.forEach((r,u)=>r.forEach((x,m)=>{if(x!=null){const k=u+"-"+m;if(keys.has(k))dup++;keys.add(k)}}));
+const imp=M.reduce((q,r)=>q+GEN.filter((_,g)=>!r.some((x,m)=>x!=null&&MV[m][1]==g)).length,0),bad=A.filter(v=>v<1||v>5).length;
+const cn=M.map(r=>r.filter(x=>x!=null).length).sort((a,b)=>a-b),qq=q=>cn[Math.floor(q*(cn.length-1))],iq=qq(.75)-qq(.25),out=cn.filter(c=>c<qq(.25)-1.5*iq||c>qq(.75)+1.5*iq).length;
+$("dp").innerHTML=[["Missing","#0369a1",Math.round(100*(1-(A.length+Te.length)/(NU*MV.length)))+"% empty cells",imp+" viewer-genre profile cells filled with the viewer’s average"],["Duplicates","#15803d",dup+" found","each viewer-movie pair appears once"],["Invalid values","#7e22ce",bad+" found","all ratings lie between 1 and 5"],["Outliers","#c2410c",out+" viewers","unusual number of ratings (IQR rule)"]].map(x=>`<div class="card tc kpi" style="--c:${x[1]}"><span class="mu">${x[0]}</span><b>${x[2]}</b>${x[3]}</div>`).join("")}
+{const n=A.length,sx=sd(A),mx=Math.max(...A),mn=Math.min(...A);
+$("fm").innerHTML="<tr><th>Measure</th><th>Formula</th><th>Value</th></tr>"+[["Mean","x̄ = Σx / n",f(GM)],["Median","middle value after sorting",med(A)],["Mode","most frequent value",mode],["Range","max − min",mx-mn],["Variance","s² = Σ(x − x̄)² / (n − 1)",f(sx*sx)],["Standard deviation","s = √s²",f(sx)],["Z-score of a 5★ rating","z = (x − x̄) / s",f((5-GM)/sx)],["Correlation","r = Σ(x − x̄)(y − ȳ) / √(Σ(x − x̄)² Σ(y − ȳ)²)","see below"]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td></tr>`).join("");
+const gm=[0,1,2,3].map(g=>mean(gr(g)));let b='<line x1="30" y1="140" x2="390" y2="140" stroke="currentColor" opacity=".3"/>';
+gm.forEach((v,i)=>b+=`<rect x="${55+i*88}" y="${140-v/5*120}" width="56" height="${v/5*120}" fill="${COL[i]}" rx="3"/><text x="${70+i*88}" y="${134-v/5*120}">${f(v)}</text><text x="${58+i*88}" y="158">${GEN[i]}</text>`);$("gb").innerHTML=b;
+const W=(a,b)=>{const t=(mean(a)-mean(b))/Math.sqrt(sd(a)**2/a.length+sd(b)**2/b.length);return{t,p:2*(1-Phi(Math.abs(t)))}},w=W(gr(0),gr(2));
+$("six").innerHTML=[["State H₀ and H₁","H₀: μAction = μRomance; H₁: they differ"],["Choose α","α = 0.05"],["Select a test","Welch t-test: two groups, unknown variance"],["Calculate","t = "+f(w.t)+", p "+pp(w.p)],["Decide",w.p<.05?"p < α, reject H₀":"p ≥ α, fail to reject H₀"],["Interpret",w.p<.05?"Genres are rated differently overall":"Overall averages hide taste groups, so look at clusters"]].map((q,i)=>`<div class="st" style="--c:${COL[i]}"><i>${i+1}</i><b>${q[0]}</b><span>${q[1]}</span></div>`).join("");
+const gs=[0,1,2,3].map(gr),z=(GM-3)/(sx/Math.sqrt(n)),pz=2*(1-Phi(Math.abs(z)));
+const lk=gs.map(g=>g.filter(v=>v>=4).length),tt=gs.map(g=>g.length),LK=lk.reduce((a,c)=>a+c,0);let chi=0;gs.forEach((g,i)=>{const e1=tt[i]*LK/n,e2=tt[i]*(n-LK)/n;chi+=(lk[i]-e1)**2/e1+((tt[i]-lk[i])-e2)**2/e2});
+const pc=1-Phi((Math.cbrt(chi/3)-(1-2/27))/Math.sqrt(2/27)),ssb=gs.reduce((q,g)=>q+g.length*(mean(g)-GM)**2,0),ssw=gs.reduce((q,g)=>q+g.reduce((x,v)=>x+(v-mean(g))**2,0),0),dw=n-4,F=(ssb/3)/(ssw/dw),c3=Math.cbrt(F);
+const pF=1-Phi(((1-2/(9*dw))*c3-(1-2/27))/Math.sqrt(2/27+c3*c3*2/(9*dw)));
+$("tt").innerHTML="<tr><th>Test</th><th>Question on our data</th><th>Statistic</th><th>Live result (α = 0.05)</th></tr>"+[["Z-test","Is the mean rating different from a neutral 3.0?","z = (x̄ − μ₀) / (σ / √n)",`z = ${f(z)}, p ${pp(pz)}${dc(pz)}`],["t-test","Are Action and Romance rated differently?","t = (x̄₁ − x̄₂) / √(s₁²/n₁ + s₂²/n₂)",`t = ${f(w.t)}, p ${pp(w.p)}${dc(w.p)}`],["Chi-square","Is “liked” (4★ or more) linked to genre?","χ² = Σ (O − E)² / E",`χ² = ${f(chi)}, df 3, p ${pp(pc)}${dc(pc)}`],["ANOVA","Do all four genres share one mean rating?","F = MSB / MSW",`F = ${f(F)}, p ${pp(pF)}${dc(pF)}`]].map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+const xa=FT.map(p=>p[0]),ys=FT.map(p=>p[1]),r1=corr(xa,ys),r2=corr(xa,FT.map(p=>p[2])),sl=r1*sd(ys)/sd(xa),ic=mean(ys)-sl*mean(xa),P=x=>30+(x-1)/4*270,Q=y=>230-(y-1)/4*210;
+let c='<line x1="30" y1="230" x2="310" y2="230" stroke="currentColor" opacity=".3"/><line x1="30" y1="10" x2="30" y2="230" stroke="currentColor" opacity=".3"/><text x="90" y="252">avg Action rating per viewer</text><text x="2" y="12">Sci-Fi</text>';
+FT.forEach(p=>c+=`<circle cx="${P(p[0])}" cy="${Q(p[1])}" r="5" fill="#0369a1" opacity=".6"/>`);c+=`<line x1="${P(1.5)}" y1="${Q(ic+sl*1.5)}" x2="${P(5)}" y2="${Q(ic+sl*5)}" stroke="#9f1239" stroke-width="2.5"/>`;$("cs").innerHTML=c;
+$("cr").innerHTML=`r(Action, Sci-Fi) = <b>${f(r1)}</b>: viewers who like Action also like Sci-Fi. r(Action, Romance) = <b>${f(r2)}</b>: opposite tastes. Correlation does not imply causation, since both patterns come from shared taste groups.`;
+$("ta1").textContent="Mean rating "+f(GM)+" stars, most common score "+mode+", spread "+f(sx,1)+"."}
+let HS=[];
+function kmH(X,k){let C=[X[0]];while(C.length<k){let b=0,bd=-1;X.forEach((p,i)=>{const d=Math.min(...C.map(c=>d2(p,c)));if(d>bd){bd=d;b=i}});C.push(X[b])}
+ const as=C=>X.map(p=>{let b=0,bd=1e18;C.forEach((c,j)=>{const d=d2(p,c);if(d<bd){bd=d;b=j}});return b});let L=as(C);const H=[{C,L}];
+ for(let t=0;t<12;t++){const C2=C.map((c,j)=>{const m=X.filter((_,i)=>L[i]==j);return m.length?c.map((_,q)=>mean(m.map(p=>p[q]))):c}),L2=as(C2);H.push({C:C2,L:L2});const same=L2.every((v,i)=>v==L[i]);C=C2;L=L2;if(same)break}return H}
+function drawStep(){const i=+$("ks").value,s=HS[i],P=x=>30+(x-1)/4*270,Q=y=>230-(y-1)/4*210;
+ let h='<line x1="30" y1="230" x2="310" y2="230" stroke="currentColor" opacity=".3"/><line x1="30" y1="10" x2="30" y2="230" stroke="currentColor" opacity=".3"/><text x="110" y="252">avg Action rating</text><text x="2" y="12">Romance</text>';
+ FT.forEach((p,n)=>h+=`<circle cx="${P(p[0])}" cy="${Q(p[2])}" r="5" fill="${COL[s.L[n]]}" opacity=".7"/>`);
+ s.C.forEach((c,j)=>h+=`<rect x="${P(c[0])-7}" y="${Q(c[2])-7}" width="14" height="14" fill="${COL[j]}" stroke="#000" stroke-width="2"/>`);$("kst").innerHTML=h;
+ $("kt").textContent=i==0?"Steps 1 to 3: K is chosen, centroids (squares) are placed, and every viewer joins the nearest one.":(i>0&&i==HS.length-1&&s.L.every((v,n)=>v==HS[i-1].L[n]))?"Step 5: no viewer changed group, so the algorithm has converged (iteration "+i+").":"Step 4 and repeat: centroids move to the mean of their members, then viewers are reassigned (iteration "+i+")."}
+function distShow(){const u=+$("usr").value,C=HS[HS.length-1].C,ds=C.map((c,j)=>({j,d:Math.sqrt(d2(FT[u],c))})),mn=Math.min(...ds.map(x=>x.d));
+ $("dist").innerHTML=`<b>Worked example: Euclidean distance</b> d(p, q) = √Σ(qᵢ − pᵢ)². Viewer ${u+1} profile = [${FT[u].map(v=>f(v,1)).join(", ")}] for ${GEN.join(", ")}.<table>`+ds.map(x=>`<tr${x.d==mn?' style="font-weight:700;background:rgba(21,128,61,.18)"':""}><td><span style="color:${COL[x.j]}">●</span> ${NM[x.j]}</td><td>d = ${f(x.d,3)}</td><td>${x.d==mn?"nearest, so assigned here":""}</td></tr>`).join("")+"</table>"}
+const SA={"Action":"Promote new action and sci-fi releases","Sci-Fi":"Recommend sci-fi series and franchises","Romance":"Feature romance and music-driven films","Comedy":"Suggest comedies and light family films"};
+const rk0=renderK,rr0=renderRec;
+renderRec=function(){rr0();distShow()};
+renderK=function(){HS=kmH(FT,K);rk0();
+ [...$("ct").rows].forEach((r,i)=>{if(!i){r.insertAdjacentHTML("beforeend","<th>Suggested action</th>");return}
+  [...r.cells].slice(2,6).forEach(c=>{c.style.background=`hsla(${(+c.textContent-1)*30},75%,50%,.35)`});
+  r.insertAdjacentHTML("beforeend","<td>"+(SA[r.cells[0].textContent.replace("●","").trim().split(" ")[0]]||"")+"</td>")});
+ const kb=$("ev").querySelectorAll("b");$("ta3").textContent="Hold-out error (RMSE): "+kb[0].textContent+" for popularity vs "+kb[1].textContent+" for clusters.";
+ $("ks").max=HS.length-1;$("ks").value=HS.length-1;drawStep()};
+$("ks").oninput=drawStep;
+$("k").oninput=e=>{K=+e.target.value;renderK()};$("usr").onchange=renderRec;renderK();
+</script></body></html>
